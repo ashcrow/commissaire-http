@@ -68,6 +68,10 @@ class Bus:
         :returns: The same instance.
         :rtype: commissaire_http.bus.Bus
         """
+        if self.connection is not None:
+            self.logger.warn('Bus already connected.')
+            return self
+
         self.connection = Connection(self.connection_url)
         self._channel = self.connection.channel()
         self._exchange = Exchange(

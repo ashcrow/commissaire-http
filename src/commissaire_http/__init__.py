@@ -32,7 +32,7 @@ class ThreadedWSGIServer(ThreadingMixIn, WSGIServer):
     pass
 
 
-class CommisaireRequestHandler(WSGIRequestHandler):
+class CommissaireRequestHandler(WSGIRequestHandler):
     """
     Commissaire version of the WSGIRequestHandler.
     """
@@ -63,7 +63,7 @@ class CommissaireHttpServer:
             self._bind_port,
             self.dispatcher.dispatch,
             server_class=ThreadedWSGIServer,
-            handler_class=CommisaireRequestHandler)
+            handler_class=CommissaireRequestHandler)
 
         # If we are given a PEM file then wrap the socket
         if tls_pem_file:
