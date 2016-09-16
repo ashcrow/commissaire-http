@@ -25,7 +25,7 @@ class HTTPBasicAuth(Authenticator):
     Basic auth implementation of an authenticator.
     """
 
-    def __init__(self, filepath=None, users=None):
+    def __init__(self, filepath=None, users={}):
         """
         Creates an instance of the HTTPBasicAuth authenticator.
 
@@ -39,7 +39,7 @@ class HTTPBasicAuth(Authenticator):
         :type users: dict or None
         :returns: HTTPBasicAuth
         """
-        self._data = {} if users is None else users
+        self._data = users
         if filepath is not None:
             self._load_from_file(filepath)
         # elif users is None:

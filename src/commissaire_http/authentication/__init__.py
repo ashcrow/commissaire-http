@@ -56,7 +56,7 @@ class Authenticator:
 
     def authenticate(self, environ, start_response):
         """
-        Method should be overriden with specific a specific authentication
+        Method should be overriden with a specific authentication
         call for an implementation.
 
         :param environ: WSGI environment instance.

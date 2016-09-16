@@ -48,7 +48,7 @@ class HTTPClientCertAuth(Authenticator):
         :returns: True on success, False on failure
         :rtype: bool
         """
-        cert = environ.get('SSL_CLIENT_VERIFY', {})
+        cert = environ.get('SSL_CLIENT_VERIFY')
         if cert:
             for obj in cert.get('subject', ()):
                 for key, value in obj:
