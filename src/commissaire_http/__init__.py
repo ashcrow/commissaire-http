@@ -14,15 +14,94 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Prototype http server.
+Main Commissaire application server code.
 """
 
 import logging
 
-from wsgiref.simple_server import WSGIServer, WSGIRequestHandler, make_server
+from argparse import Namespace
 from socketserver import ThreadingMixIn
+from wsgiref.simple_server import WSGIServer, WSGIRequestHandler, make_server
 
+from commissaire.config import read_config_file
 from commissaire_http.bus import Bus
+
+
+def parse_args(parser):
+    """
+    Parses and combines arguments from the server configuration file
+    and the command-line invocation.  Command-line arguments override
+    the configuration file.
+
+    The 'parser' argument should be a fresh argparse.ArgumentParser
+    instance with a suitable description, epilog, etc.  This method
+    will add arguments to it.
+
+    :param parser: An argument parser instance
+    :type parser: argparse.ArgumentParser
+    :returns: The parsed arguments in the form of a Namespace
+    :rtype: argparse.Namespace
+    """
+    # Do not use required=True because it would preclude such
+    # arguments from being specified in a configuration file.
+    parser.add_argument(
+        '--config-file', '-c', type=str,
+        help='Full path to a JSON configuration file '
+             '(command-line arguments override)')
+    parser.add_argument(
+        '--no-config-file', action='store_true',
+        help='Disregard default configuration file, if it exists')
+    parser.add_argument(
+        '--listen-interface', '-i', type=str, default='0.0.0.0',
+        help='Interface to listen on')
+    parser.add_argument(
+        '--listen-port', '-p', type=int, default=8000,
+        help='Port to listen on')
+    parser.add_argument(
+        '--tls-keyfile', type=str,
+        help='Full path to the TLS keyfile for the commissaire server')
+    parser.add_argument(
+        '--tls-certfile', type=str,
+        help='Full path to the TLS certfile for the commissaire server')
+    parser.add_argument(
+        '--tls-clientverifyfile', type=str,
+        help='Full path to the TLS file containing the certificate '
+             'authorities that client certificates should be verified against')
+    parser.add_argument(
+        '--authentication-plugin', type=str,
+        default='commissaire.authentication.httpbasicauth',
+        metavar='MODULE_NAME',
+        help=('Authentication Plugin module. '
+              'EX: commissaire.authentication.httpbasicauth'))
+    parser.add_argument(
+        '--authentication-plugin-kwargs', type=str, default={},
+        metavar='KEYWORD_ARGS',
+        help='Authentication Plugin configuration (key=value,...)')
+    parser.add_argument(
+        '--store-handlers', type=str, default=[],
+        action='append', metavar='JSON_OBJECT',
+        help='Store Handler configuration in JSON format, '
+             'can be specified multiple times')
+
+    parser.add_argument(
+        '--bus-exchange', type=str, default='commissaire',
+        help='Message bus exchange name.')
+    parser.add_argument(
+        '--bus-uri', type=str, metavar='BUS_URI',
+        help=(
+            'Message bus connection URI. See:'
+            'http://kombu.readthedocs.io/en/latest/userguide/connections.html')
+    )
+
+    # We have to parse the command-line arguments twice.  Once to extract
+    # the --config-file option, and again with the config file content as
+    # a baseline.
+    args = parser.parse_args()
+    if not args.no_config_file:
+        namespace_kwargs = read_config_file(args.config_file)
+        args = parser.parse_args(namespace=Namespace(**namespace_kwargs))
+
+    return args
 
 
 class ThreadedWSGIServer(ThreadingMixIn, WSGIServer):
