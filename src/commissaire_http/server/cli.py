@@ -19,7 +19,7 @@ Commissaire HTTP based application server.
 import argparse
 import logging
 
-from commissaire_http.server.routes import DISPATCHER
+from commissaire_http.server.routing import DISPATCHER
 from commissaire_http import CommissaireHttpServer, parse_args
 
 
