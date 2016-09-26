@@ -48,7 +48,8 @@ def main():
         server = CommissaireHttpServer(
             args.listen_interface,
             args.listen_port,
-            DISPATCHER)
+            DISPATCHER,
+            args.tls_pemfile)
 
         server.setup_bus(
             args.bus_exchange,

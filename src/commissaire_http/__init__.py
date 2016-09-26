@@ -58,11 +58,8 @@ def parse_args(parser):
         '--listen-port', '-p', type=int, default=8000,
         help='Port to listen on')
     parser.add_argument(
-        '--tls-keyfile', type=str,
-        help='Full path to the TLS keyfile for the commissaire server')
-    parser.add_argument(
-        '--tls-certfile', type=str,
-        help='Full path to the TLS certfile for the commissaire server')
+        '--tls-pemfile', type=str,
+        help='Full path to the TLS PEM for the commissaire server')
     parser.add_argument(
         '--tls-clientverifyfile', type=str,
         help='Full path to the TLS file containing the certificate '
@@ -82,7 +79,6 @@ def parse_args(parser):
         action='append', metavar='JSON_OBJECT',
         help='Store Handler configuration in JSON format, '
              'can be specified multiple times')
-
     parser.add_argument(
         '--bus-exchange', type=str, default='commissaire',
         help='Message bus exchange name.')
