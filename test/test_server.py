@@ -20,7 +20,9 @@ from unittest import mock
 
 from . import TestCase
 
-from commissaire_http.server.cli import main
+from commissaire_http.authentication import Authenticator
+from commissaire_http.server.cli import main, inject_authentication
+from commissaire_http.dispatcher import Dispatcher
 
 
 class TestServerCli(TestCase):
@@ -35,3 +37,38 @@ class TestServerCli(TestCase):
         """
         main()
         _server().serve_forever.assert_called_once_with()
+
+
+class TestInjectAuthentication(TestCase):
+    """
+    Tests for the inject_authentication function.
+    """
+
+    def test_inject_authentication_with_no_kwargs(self):
+        """
+        Verify inject_authentication works when no kwargs are given.
+        """
+        result = inject_authentication(
+            'commissaire_http.authentication.httpbasicauth', {})
+        self.assertIsInstance(result, Dispatcher)
+        self.assertIsInstance(result.dispatch, Authenticator)
+
+    def test_inject_authentication_with_kwargs(self):
+        """
+        Verify inject_authentication works when kwargs are given.
+        """
+        result = inject_authentication(
+            'commissaire_http.authentication.httpbasicauth',
+            'filepath=conf/users.json')
+        self.assertIsInstance(result, Dispatcher)
+        self.assertIsInstance(result.dispatch, Authenticator)
+
+    def test_inject_authentication_with_a_missing_authenticator(self):
+        """
+        Verify inject_authentication raises when an authenticator doesn't exist.
+        """
+        self.assertRaises(
+            ImportError,
+            inject_authentication,
+            'commissaire_http.doesnotexist',
+            {})

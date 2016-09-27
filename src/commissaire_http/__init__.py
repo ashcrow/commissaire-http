@@ -66,7 +66,7 @@ def parse_args(parser):
              'authorities that client certificates should be verified against')
     parser.add_argument(
         '--authentication-plugin', type=str,
-        default='commissaire.authentication.httpbasicauth',
+        default='commissaire_http.authentication.httpbasicauth',
         metavar='MODULE_NAME',
         help=('Authentication Plugin module. '
               'EX: commissaire.authentication.httpbasicauth'))
