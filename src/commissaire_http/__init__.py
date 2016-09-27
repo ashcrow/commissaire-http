@@ -23,7 +23,7 @@ from argparse import Namespace
 from socketserver import ThreadingMixIn
 from wsgiref.simple_server import WSGIServer, WSGIRequestHandler, make_server
 
-from commissaire.config import read_config_file
+from commissaire.util.config import read_config_file
 from commissaire_http.bus import Bus
 
 
@@ -137,15 +137,28 @@ class CommissaireHttpServer:
     #: Class level logger
     logger = logging.getLogger('CommissaireHttpServer')
 
-    def __init__(self, bind_host, bind_port, dispatcher, tls_pem_file=None):
+    def __init__(self, bind_host, bind_port, dispatcher,
+                 tls_pem_file=None, tls_clientverify_file=None):
         """
         Initializes a new CommissaireHttpServer instance.
+
+        :param bind_host: Host adapter to listen on.
+        :type bind_host: str
+        :param bind_port: Host port to listen on.
+        :type bind_port: int
+        :param dispatcher: Dispatcher instance (WSGI) to route and respond.
+        :type dispatcher: commissaire_http.dispatcher.Dispatcher
+        :param tls_pem_file: Full path to the PEM file for TLS.
+        :type tls_pem_file: str
+        :param tls_clientverify_file: Full path to CA to verify certs.
+        :type tls_clientverify_file: str
         """
         # To use the bus call setup_bus()
         self.bus = None
         self._bind_host = bind_host
         self._bind_port = bind_port
         self._tls_pem_file = tls_pem_file
+        self._tls_clientverify_file = tls_clientverify_file
         self.dispatcher = dispatcher
         self._httpd = make_server(
             self._bind_host,
@@ -157,11 +170,21 @@ class CommissaireHttpServer:
         # If we are given a PEM file then wrap the socket
         if tls_pem_file:
             import ssl
+            client_side_cert_kwargs = {}
+            if self._tls_clientverify_file:
+                client_side_cert_kwargs = {
+                    'cert_reqs': ssl.CERT_REQUIRED,
+                    'ca_certs': self._tls_clientverify_file,
+                }
+                self.logger.info(
+                    'Requiring client side certificate CA validation.')
+
             self._httpd.socket = ssl.wrap_socket(
                 self._httpd.socket,
                 certfile=self._tls_pem_file,
                 ssl_version=ssl.PROTOCOL_TLSv1_2,
-                server_side=True)
+                server_side=True,
+                **client_side_cert_kwargs)
             self.logger.info('Using TLS with {}'.format(self._tls_pem_file))
 
         self.logger.debug('Created httpd server: {}:{}'.format(

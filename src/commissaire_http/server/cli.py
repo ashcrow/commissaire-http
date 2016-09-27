@@ -85,7 +85,8 @@ def main():
             args.listen_interface,
             args.listen_port,
             DISPATCHER,
-            args.tls_pemfile)
+            args.tls_pemfile,
+            args.tls_clientverifyfile)
 
         # Set up our bus data
         server.setup_bus(
