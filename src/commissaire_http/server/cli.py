@@ -102,7 +102,9 @@ def main():
         parser.error('Could not import "{}" for authentication'.format(
             args.authentication_plugin))
     except Exception as error:  # pragma: no cover
-        parser.error(error)
+        from traceback import print_exc
+        print_exc()
+        parser.error('Exception shown above. Error: {}'.format(error))
 
 
 if __name__ == '__main__':  # pragma: no cover
