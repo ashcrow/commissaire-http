@@ -89,9 +89,10 @@ def parse_args(parser):
     # a baseline.
     args = parser.parse_args()
     if not args.no_config_file:
-        namespace_kwargs = read_config_file(args.config_file)
-        args = parser.parse_args(namespace=Namespace(**namespace_kwargs))
-
+        # Change dashes to underscores
+        json_object = {k.replace('-', '_'): v for k, v in read_config_file(
+            args.config_file).items()}
+        args = parser.parse_args(namespace=Namespace(**json_object))
     return args
 
 
