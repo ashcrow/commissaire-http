@@ -75,11 +75,6 @@ def parse_args(parser):
         metavar='KEYWORD_ARGS',
         help='Authentication Plugin configuration (key=value,...)')
     parser.add_argument(
-        '--store-handlers', type=str, default=[],
-        action='append', metavar='JSON_OBJECT',
-        help='Store Handler configuration in JSON format, '
-             'can be specified multiple times')
-    parser.add_argument(
         '--bus-exchange', type=str, default='commissaire',
         help='Message bus exchange name.')
     parser.add_argument(
