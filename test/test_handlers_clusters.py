@@ -32,7 +32,14 @@ class Test_clusters(TestCase):
         Verify list_clusters responds with the right information.
         """
         bus = mock.MagicMock()
-        bus.request.return_value = {'clusters': [{'name': 'test'}]}
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': [{'name': 'test'}],
+            'id': '123'}
         self.assertEquals(
-            {'jsonrpc': '2.0', 'result': ['test'], 'id': '123'},
-            clusters.list_clusters({'id': "123"}, bus))
+            {
+                'jsonrpc': '2.0',
+                'result': ['test'],
+                'id': '123',
+            },
+            clusters.list_clusters(bus.request.return_value, bus))
