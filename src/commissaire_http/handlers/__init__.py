@@ -22,7 +22,7 @@ import logging
 LOGGER = logging.getLogger('Handlers')
 
 
-def create_response(id, result=None, error=None):
+def create_response(id, result=None, error=None, error_code=-32603):
     """
     Creates a jsonrpc response based on input.
 
@@ -31,7 +31,9 @@ def create_response(id, result=None, error=None):
     :param result: The result to send back to the requestor.
     :type result: mixed
     :param error: The error to send back to the requestor.
-    :type error: dict
+    :type error: str or Exception
+    :param error_code: JSONRPC error code. Defaults to Internal Error.
+    :type error_code: int
     :returns: A jsonrpc structure.
     :rtype: dict
     """
@@ -43,9 +45,13 @@ def create_response(id, result=None, error=None):
         jsonrpc_response['result'] = result
     elif error:
         jsonrpc_response['error'] = {
-            'code': -32603,  # Default to Internal Error
+            'code': error_code,
             'message': error,
         }
+        if isinstance(error, Exception):
+            jsonrpc_response['error']['message'] = str(error)
+            jsonrpc_response['error']['data'] = {
+                'exception': str(type(error))}
     else:
         raise TypeError('Either a result or error is required.')
     return jsonrpc_response

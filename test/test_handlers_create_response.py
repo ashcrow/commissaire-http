@@ -46,7 +46,12 @@ class Test_create_response(TestCase):
         """
         Verify create_response creates the proper error jsonrpc structure.
         """
-        response = create_response(UID, error='test')
-        self.assertEquals('2.0', response['jsonrpc'])
-        self.assertEquals(UID, response['id'])
-        self.assertEquals('test', response['error']['message'])
+        for (error, expected_response) in [
+            (Exception('test'), 'test'),
+            ('test', 'test')
+        ]:
+            response = create_response(UID, error=error)
+            self.assertEquals('2.0', response['jsonrpc'])
+            self.assertEquals(UID, response['id'])
+            print(response)
+            self.assertEquals(expected_response, response['error']['message'])
