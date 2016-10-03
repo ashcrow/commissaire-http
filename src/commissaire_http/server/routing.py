@@ -22,21 +22,15 @@ from commissaire_http.router import Router
 #: Global HTTP router for the dispatcher
 ROUTER = Router()
 ROUTER.connect(
-    R'/hello/',
-    controller='commissaire_http.handlers.hello_world',
-    conditions={'method': 'GET'})
-ROUTER.connect(
-    R'/world/',
-    controller='commissaire_http.handlers.create_world',
-    conditions={'method': 'PUT'})
-ROUTER.connect(
-    R'/hello_class/',
-    controller='commissaire_http.handlers.ClassHandlerExample.hello',
-    conditions={'method': 'GET'})
-ROUTER.connect(
     R'/api/v0/clusters/',
     controller='commissaire_http.handlers.clusters.list_clusters',
     conditions={'method': 'GET'})
+ROUTER.connect(
+    R'/api/v0/cluster/{name}/',
+    requirements={'name': R'[a-zA-Z0-9\-\_]+'},
+    controller='commissaire_http.handlers.clusters.get_cluster',
+    conditions={'method': 'GET'})
+
 
 #: Global HTTP dispatcher for the server
 DISPATCHER = Dispatcher(

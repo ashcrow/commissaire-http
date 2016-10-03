@@ -43,3 +43,24 @@ class Test_clusters(TestCase):
                 'id': '123',
             },
             clusters.list_clusters(bus.request.return_value, bus))
+
+    def test_get_cluster(self):
+        """
+        Verify get_cluster responds with the right information.
+        """
+        bus = mock.MagicMock()
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': [{'name': 'test'}],
+            'id': '123'}
+        self.assertEquals(
+            {
+                'jsonrpc': '2.0',
+                'result': [{'name': 'test'}],
+                'id': '123',
+            },
+            clusters.get_cluster({
+                'jsonrpc': '2.0',
+                'id': '123',
+                'params': {'name': 'test'}
+                }, bus))
