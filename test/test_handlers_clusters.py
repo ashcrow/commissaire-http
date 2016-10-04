@@ -19,7 +19,9 @@ Test for commissaire_http.handlers.clusters module.
 from unittest import mock
 
 from . import TestCase
-from commissaire_http.handlers import clusters
+
+from commissaire.models import Cluster, Network, ValidationError
+from commissaire_http.handlers import create_response, clusters
 
 
 class Test_clusters(TestCase):
@@ -64,3 +66,108 @@ class Test_clusters(TestCase):
                 'id': '123',
                 'params': {'name': 'test'}
                 }, bus))
+
+    def test_create_cluster(self):
+        """
+        Verify create_cluster saves new clusters.
+        """
+        bus = mock.MagicMock()
+        cluster_json = Cluster.new(name='test').to_json()
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': cluster_json,
+            'id': '123'}
+
+        self.assertEquals(
+            {
+                'jsonrpc': '2.0',
+                'result': cluster_json,
+                'id': '123',
+            },
+            clusters.create_cluster({
+                'jsonrpc': '2.0',
+                'id': '123',
+                'params': {'name': 'test'}
+                }, bus))
+
+    def test_create_cluster_with_invalid_data(self):
+        """
+        Verify create_cluster saves new clusters.
+        """
+        bus = mock.MagicMock()
+        # names must be a str, not an int
+        cluster = Cluster.new(name=123)
+
+        bus.request.side_effect = Exception
+
+        # Create the response we expect
+        expected_response =  create_response(
+            id='123',
+            error=ValidationError('test'),
+            error_code=-32602)
+        # Ignore checking the message. Just verify it exists.
+        expected_response['error']['message'] = mock.ANY
+
+        self.assertEquals(
+            expected_response,
+            clusters.create_cluster({
+                'jsonrpc': '2.0',
+                'id': '123',
+                'params': {'name': 123}
+                }, bus))
+
+
+    def test_create_cluster_with_valid_network(self):
+        """
+        Verify create_cluster uses valid networks as expected.
+        """
+        bus = mock.MagicMock()
+        cluster = Cluster.new(name='test', network='test')
+        bus.request.side_effect = (
+            Exception,
+            Network.new(name='test'),
+            {
+                'jsonrpc': '2.0',
+                'result': cluster.to_json(),
+                'id': '123',
+            },
+        )
+
+        # Call the handler...
+        clusters.create_cluster({
+            'jsonrpc': '2.0',
+            'id': '123',
+            'params': {'name': 'test', 'network': 'test'}
+            }, bus)
+        bus.request.assert_called_with(
+            'storage.save', 'save', params=[
+                'Cluster', cluster.to_dict()])
+
+    def test_create_cluster_with_invalid_network(self):
+        """
+        Verify create_cluster reacts to invalid networks as expected.
+        """
+        bus = mock.MagicMock()
+        cluster = Cluster.new(name='test', network='test')
+        bus.request.side_effect = (
+            Exception,
+            Exception,
+            {
+                'jsonrpc': '2.0',
+                'result': cluster.to_json(),
+                'id': '123',
+            },
+        )
+
+        # Call the handler...
+        clusters.create_cluster({
+            'jsonrpc': '2.0',
+            'id': '123',
+            'params': {'name': 'test', 'network': 'test'}
+            }, bus)
+        # Update clusters network to be 'default' as we expect 'test' to be
+        # rejected by the handler
+        cluster.network = 'default'
+        bus.request.assert_called_with(
+            'storage.save', 'save', params=[
+                'Cluster', cluster.to_dict()])

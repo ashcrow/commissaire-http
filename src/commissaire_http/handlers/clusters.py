@@ -16,7 +16,10 @@
 Clusters handlers.
 """
 
-from commissaire_http.handlers import create_response
+from commissaire import constants as C
+from commissaire import models
+
+from commissaire_http.handlers import LOGGER, create_response
 
 
 def list_clusters(message, bus):
@@ -47,3 +50,45 @@ def get_cluster(message, bus):
         'storage.get', 'get', params=[
             'Cluster', {'name': message['params']['name']}])
     return create_response(message['id'], cluster['result'])
+
+
+def create_cluster(message, bus):
+    """
+    Creates a new cluster.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        bus.request('storage.get', 'get', params=[
+            'Cluster', {'name': message['params']['name']}])
+        LOGGER.debug(
+            'Creation of already exisiting cluster {0} requested.'.format(
+                message['params']['name']))
+    except Exception as error:
+        LOGGER.debug('Brand new cluster being created.')
+
+        if message['params'].get('network'):
+            # Verify the networks existence
+            try:
+                bus.request('storage.get', 'get', params=[
+                    'Network', {'name': message['params']['network']}
+                ])
+            except Exception as error:
+                # Default if the network doesn't exist
+                message['params']['network'] = C.DEFAULT_CLUSTER_NETWORK_JSON['name']  # noqa
+
+    try:
+        cluster = models.Cluster.new(**message['params'])
+        cluster._validate()
+        response = bus.request(
+            'storage.save', 'save', params=[
+                'Cluster', cluster.to_dict()])
+        return create_response(message['id'], response['result'])
+    except models.ValidationError as error:
+        return create_response(
+            message['id'],
+            error=error,
+            error_code=-32602)  # Invalid params
