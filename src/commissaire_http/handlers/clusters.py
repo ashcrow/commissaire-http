@@ -17,6 +17,7 @@ Clusters handlers.
 """
 
 from commissaire import constants as C
+from commissaire_http.constants import JSONRPC_ERRORS
 from commissaire import models
 
 from commissaire_http.handlers import LOGGER, create_response
@@ -92,3 +93,29 @@ def create_cluster(message, bus):
             message['id'],
             error=error,
             error_code=-32602)  # Invalid params
+
+
+def list_cluster_members(message, bus):
+    """
+    Lists hosts in a cluster.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    response = None
+    try:
+        cluster = bus.request('storage.get', 'get', params=[
+            'Cluster', {'name': message['params']['name']}])
+        LOGGER.debug('Cluster found: {}'.format(cluster['result']['name']))
+        response = create_response(
+            message['id'], result=cluster['result']['hostset'])
+    except Exception as error:
+        LOGGER.error('Could not find cluster "{}"'.format(
+            message['params']['name']))
+        response = create_response(
+            message['id'], error=error,
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+    LOGGER.debug('Returning: {}'.format(response))
+    return response
