@@ -180,7 +180,7 @@ class Test_clusters(TestCase):
         bus.request.return_value = {
             'jsonrpc': '2.0',
             'result': Cluster.new(
-                name='test', hostset=['127.0.0.1']).to_dict(),
+                name='test', hostset=['127.0.0.1']).to_dict(secure=True),
             'id': '123'}
         self.assertEquals(
             {
@@ -204,7 +204,7 @@ class Test_clusters(TestCase):
 
         bus.request.return_value = {
             'jsonrpc': '2.0',
-            'result': cluster.to_dict(),
+            'result': cluster.to_dict(secure=True),
             'id': '123'}
 
         result = clusters.update_cluster_memebers({
@@ -225,7 +225,7 @@ class Test_clusters(TestCase):
 
         bus.request.return_value = {
             'jsonrpc': '2.0',
-            'result': cluster.to_dict(),
+            'result': cluster.to_dict(secure=True),
             'id': '123'}
 
         result = clusters.update_cluster_memebers({

@@ -104,7 +104,7 @@ def list_cluster_members(message, bus):
     response = None
     try:
         cluster = bus.request('storage.get', 'get', params=[
-            'Cluster', {'name': message['params']['name']}])
+            'Cluster', {'name': message['params']['name']}, True])
         LOGGER.debug('Cluster found: {}'.format(cluster['result']['name']))
         LOGGER.debug('Returning: {}'.format(response))
         return create_response(
@@ -132,7 +132,7 @@ def update_cluster_memebers(message, bus):
 
     try:
         cluster = bus.request('storage.get', 'get', params=[
-            'Cluster', {'name': message['params']['name']}])
+            'Cluster', {'name': message['params']['name']}, True])
     except Exception as error:
         return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
 
