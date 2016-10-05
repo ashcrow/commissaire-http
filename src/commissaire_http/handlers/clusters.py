@@ -119,3 +119,57 @@ def list_cluster_members(message, bus):
             error_code=JSONRPC_ERRORS['NOT_FOUND'])
     LOGGER.debug('Returning: {}'.format(response))
     return response
+
+
+def update_cluster_memebers(message, bus):
+    """
+    Lists hosts in a cluster.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        old_hosts = set(message['params']['old'])  # Ensures no duplicates
+        new_hosts = set(message['params']['new'])  # Ensures no duplicates
+        LOGGER.debug('old_hosts="{}", new_hosts="{}"'.format(
+            old_hosts, new_hosts))
+    except Exception as error:
+        LOGGER.error('Unable to read old and new sets.')
+        response = create_response(
+            message['id'], error=error,
+            error_code=JSONRPC_ERRORS['BAD_REQUEST'])
+        LOGGER.debug('Returning: {}'.format(response))
+        return response
+
+    try:
+        cluster = bus.request('storage.get', 'get', params=[
+            'Cluster', {'name': message['params']['name']}])
+    except Exception as error:
+        LOGGER.error('Cluster not found: "{}"'.format(
+            message['params']['name']))
+        response = create_response(
+            message['id'], error=error,
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+        LOGGER.debug('Returning: {}'.format(response))
+        return response
+
+    if old_hosts != set(cluster['result']['hostset']):
+        msg = 'Conflict setting hosts for cluster {0}'.format(
+            cluster['result']['name'])
+        LOGGER.error(msg)
+        # TODO 409
+        response = create_response(
+            message['id'], error=msg,
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+        LOGGER.debug('Returning: {}'.format(response))
+        return response
+
+    cluster['result']['hostset'] = list(new_hosts)
+    cluster = models.Cluster.new(**cluster['result'])
+    cluster._validate()
+    response = bus.request(
+        'storage.save', 'save', params=[
+            'Cluster', cluster.to_dict()])
+    return create_response(message['id'], response['result'])

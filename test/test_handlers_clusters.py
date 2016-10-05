@@ -171,3 +171,76 @@ class Test_clusters(TestCase):
         bus.request.assert_called_with(
             'storage.save', 'save', params=[
                 'Cluster', cluster.to_dict()])
+
+    def test_update_cluster_memebers_with_valid_input(self):
+        """
+        Verify that update_cluster_memebers handles valid input.
+        """
+        bus = mock.MagicMock()
+        cluster = Cluster.new(
+            name='test', hostset=['127.0.0.1'])
+
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': cluster.to_dict(),
+            'id': '123'}
+
+        result = clusters.update_cluster_memebers({
+            'jsonrpc': '2.0',
+            'id': '123',
+            'params': {'name': 'test', 'old': ['127.0.0.1'], 'new': []}
+        }, bus)
+
+        self.assertEquals([], result['result']['hostset'])
+
+    def test_update_cluster_memebers_with_conflicting_input(self):
+        """
+        Verify that update_cluster_memebers handles conflicting input.
+        """
+        bus = mock.MagicMock()
+        cluster = Cluster.new(
+            name='test', hostset=['127.0.0.1'])
+
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': cluster.to_dict(),
+            'id': '123'}
+
+        result = clusters.update_cluster_memebers({
+            'jsonrpc': '2.0',
+            'id': '123',
+            'params': {'name': 'test', 'old': [], 'new': []}
+        }, bus)
+
+        expected_response =  create_response(
+            id='123',
+            error='Conflict setting hosts for cluster test',
+            error_code=-32601)
+        self.assertEquals(expected_response, result)
+
+    def test_update_cluster_memebers_with_missing_params(self):
+        """
+        Verify that update_cluster_memebers handles missing old/new params.
+        """
+        for params in (
+                {},
+                {'old': []},
+                {'new': []}):
+            result = clusters.update_cluster_memebers({
+                'jsonrpc': '2.0',
+                'id': '123',
+                'params': params,
+                }, mock.MagicMock())
+            self.assertEquals(
+                {
+                    'jsonrpc': '2.0',
+                    'error': {
+                        'message': mock.ANY,
+                        'code': -32602,
+                        'data': {
+                            'exception': "<class 'KeyError'>"
+                        }
+                    }, 'id': '123'
+                },
+                result
+            )
