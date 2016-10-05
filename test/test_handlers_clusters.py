@@ -116,7 +116,6 @@ class Test_clusters(TestCase):
                 'params': {'name': 123}
                 }, bus))
 
-
     def test_create_cluster_with_valid_network(self):
         """
         Verify create_cluster uses valid networks as expected.
@@ -171,6 +170,28 @@ class Test_clusters(TestCase):
         bus.request.assert_called_with(
             'storage.save', 'save', params=[
                 'Cluster', cluster.to_dict()])
+
+    def test_list_cluster_memebers(self):
+        """
+        Verify that list_cluster_memebers returns proper information.
+        """
+        bus = mock.MagicMock()
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': Cluster.new(
+                name='test', hostset=['127.0.0.1']).to_dict(),
+            'id': '123'}
+        self.assertEquals(
+            {
+                'jsonrpc': '2.0',
+                'result': ['127.0.0.1'],
+                'id': '123',
+            },
+            clusters.list_cluster_members({
+                'jsonrpc': '2.0',
+                'id': '123',
+                'params': {'name': 'test'}
+                }, bus))
 
     def test_update_cluster_memebers_with_valid_input(self):
         """
