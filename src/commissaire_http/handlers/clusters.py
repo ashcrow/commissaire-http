@@ -20,7 +20,7 @@ from commissaire import constants as C
 from commissaire_http.constants import JSONRPC_ERRORS
 from commissaire import models
 
-from commissaire_http.handlers import LOGGER, create_response
+from commissaire_http.handlers import LOGGER, create_response, return_error
 
 
 def list_clusters(message, bus):
@@ -89,10 +89,7 @@ def create_cluster(message, bus):
                 'Cluster', cluster.to_dict()])
         return create_response(message['id'], response['result'])
     except models.ValidationError as error:
-        return create_response(
-            message['id'],
-            error=error,
-            error_code=-32602)  # Invalid params
+        return return_error(message, error, JSONRPC_ERRORS['INVALID_REQUEST'])
 
 
 def list_cluster_members(message, bus):
@@ -109,16 +106,11 @@ def list_cluster_members(message, bus):
         cluster = bus.request('storage.get', 'get', params=[
             'Cluster', {'name': message['params']['name']}])
         LOGGER.debug('Cluster found: {}'.format(cluster['result']['name']))
-        response = create_response(
+        LOGGER.debug('Returning: {}'.format(response))
+        return create_response(
             message['id'], result=cluster['result']['hostset'])
     except Exception as error:
-        LOGGER.error('Could not find cluster "{}"'.format(
-            message['params']['name']))
-        response = create_response(
-            message['id'], error=error,
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-    LOGGER.debug('Returning: {}'.format(response))
-    return response
+        return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
 
 
 def update_cluster_memebers(message, bus):
@@ -136,35 +128,20 @@ def update_cluster_memebers(message, bus):
         LOGGER.debug('old_hosts="{}", new_hosts="{}"'.format(
             old_hosts, new_hosts))
     except Exception as error:
-        LOGGER.error('Unable to read old and new sets.')
-        response = create_response(
-            message['id'], error=error,
-            error_code=JSONRPC_ERRORS['BAD_REQUEST'])
-        LOGGER.debug('Returning: {}'.format(response))
-        return response
+        return return_error(message, error, JSONRPC_ERRORS['BAD_REQUEST'])
 
     try:
         cluster = bus.request('storage.get', 'get', params=[
             'Cluster', {'name': message['params']['name']}])
     except Exception as error:
-        LOGGER.error('Cluster not found: "{}"'.format(
-            message['params']['name']))
-        response = create_response(
-            message['id'], error=error,
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-        LOGGER.debug('Returning: {}'.format(response))
-        return response
+        return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
 
     if old_hosts != set(cluster['result']['hostset']):
         msg = 'Conflict setting hosts for cluster {0}'.format(
             cluster['result']['name'])
         LOGGER.error(msg)
         # TODO 409
-        response = create_response(
-            message['id'], error=msg,
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-        LOGGER.debug('Returning: {}'.format(response))
-        return response
+        return return_error(message, msg, JSONRPC_ERRORS['NOT_FOUND'])
 
     cluster['result']['hostset'] = list(new_hosts)
     cluster = models.Cluster.new(**cluster['result'])

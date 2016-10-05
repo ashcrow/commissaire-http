@@ -22,6 +22,27 @@ import logging
 LOGGER = logging.getLogger('Handlers')
 
 
+def return_error(message, error, error_code):
+    """
+    Shortcut for logging and returning an error.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param error: The error to send back to the requestor.
+    :type error: str or Exception
+    :param error_code: JSONRPC error code.
+    :type error_code: int
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    LOGGER.error('Error dealing with: "{}"'.format(message))
+    response = create_response(
+        message['id'], error=error,
+        error_code=error_code)
+    LOGGER.debug('Returning: {}'.format(response))
+    return response
+
+
 def create_response(id, result=None, error=None, error_code=-32603):
     """
     Creates a jsonrpc response based on input.
