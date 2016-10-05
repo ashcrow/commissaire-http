@@ -176,3 +176,34 @@ def check_cluster_member(message, bus):
             message['id'],
             error=error,
             error_code=JSONRPC_ERRORS['NOT_FOUND'])
+
+
+def add_cluster_member(message, bus):
+    """
+    Adds a member to the cluster.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        cluster = bus.request('storage.get', 'get', params=[
+            'Cluster', {'name': message['params']['name']}, True])
+        if message['params']['host'] in cluster['result']['hostset']:
+            # Return back the host in a list ... it's already there
+            return create_response(message['id'], [message['params']['host']])
+        else:
+            cluster['result']['hostset'].append(message['params']['host'])
+            bus.request('storage.save', 'save', params=[
+                'Cluster', cluster['result'], True])
+
+            return create_response(
+                message['id'],
+                [message['params']['host']]
+            )
+    except Exception as error:
+        return create_response(
+            message['id'],
+            error=error,
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])

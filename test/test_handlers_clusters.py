@@ -314,3 +314,26 @@ class Test_clusters(TestCase):
             error='The requested host is not part of the cluster.',
             error_code=JSONRPC_ERRORS['NOT_FOUND'])
         self.assertEquals(expected_response, result)
+
+    def test_add_cluster_member_with_valid_member(self):
+        """
+        Verify that add_cluster_member actually adds a new member..
+        """
+        bus = mock.MagicMock()
+        cluster = Cluster.new(
+            name='test', hostset=[])
+
+        bus.request.return_value = {
+            'jsonrpc': '2.0',
+            'result': cluster.to_dict(secure=True),
+            'id': '123'}
+
+        result = clusters.add_cluster_member({
+            'jsonrpc': '2.0',
+            'id': '123',
+            'params': {'name': 'test', 'host': '127.0.0.1'}
+        }, bus)
+
+        expected_response = create_response(
+            '123', ['127.0.0.1'])
+        self.assertEquals(expected_response, result)
