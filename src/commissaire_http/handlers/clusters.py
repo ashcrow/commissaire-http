@@ -149,3 +149,30 @@ def update_cluster_memebers(message, bus):
         'storage.save', 'save', params=[
             'Cluster', cluster.to_dict()])
     return create_response(message['id'], response['result'])
+
+
+def check_cluster_member(message, bus):
+    """
+    Checks is a member is part of the cluster.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        cluster = bus.request('storage.get', 'get', params=[
+            'Cluster', {'name': message['params']['name']}, True])
+        if message['params']['host'] in cluster['result']['hostset']:
+            # Return back the host in a list
+            return create_response(message['id'], [message['params']['host']])
+        else:
+            return create_response(
+                message['id'],
+                error='The requested host is not part of the cluster.',
+                error_code=JSONRPC_ERRORS['NOT_FOUND'])
+    except Exception as error:
+        return create_response(
+            message['id'],
+            error=error,
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])

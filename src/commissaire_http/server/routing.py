@@ -40,6 +40,14 @@ ROUTER.connect(
     requirements={'name': R'[a-zA-Z0-9\-\_]+'},
     controller='commissaire_http.handlers.clusters.list_cluster_members',
     conditions={'method': 'GET'})
+ROUTER.connect(
+    R'/api/v0/cluster/{name}/hosts/{host}/',
+    requirements={
+        'name': R'[a-zA-Z0-9\-\_]+',
+        'host': R'[a-zA-Z0-9\-\_\.]+',
+    },
+    controller='commissaire_http.handlers.clusters.check_cluster_member',
+    conditions={'method': 'GET'})
 
 
 #: Global HTTP dispatcher for the server
