@@ -20,8 +20,9 @@ from unittest import mock
 
 from . import TestCase
 
-from commissaire.models import Cluster, Network, ValidationError
+from commissaire.constants import JSONRPC_ERRORS
 from commissaire_http.handlers import create_response, clusters
+from commissaire.models import Cluster, Network, ValidationError
 
 
 class Test_clusters(TestCase):
@@ -236,7 +237,7 @@ class Test_clusters(TestCase):
         expected_response =  create_response(
             id='123',
             error='Conflict setting hosts for cluster test',
-            error_code=-32601)
+            error_code=JSONRPC_ERRORS['CONFLICT'])
         self.assertEquals(expected_response, result)
 
     def test_update_cluster_memebers_with_missing_params(self):
@@ -257,7 +258,7 @@ class Test_clusters(TestCase):
                     'jsonrpc': '2.0',
                     'error': {
                         'message': mock.ANY,
-                        'code': -32602,
+                        'code': JSONRPC_ERRORS['BAD_REQUEST'],
                         'data': {
                             'exception': "<class 'KeyError'>"
                         }

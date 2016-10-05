@@ -140,8 +140,7 @@ def update_cluster_memebers(message, bus):
         msg = 'Conflict setting hosts for cluster {0}'.format(
             cluster['result']['name'])
         LOGGER.error(msg)
-        # TODO 409
-        return return_error(message, msg, JSONRPC_ERRORS['NOT_FOUND'])
+        return return_error(message, msg, JSONRPC_ERRORS['CONFLICT'])
 
     cluster['result']['hostset'] = list(new_hosts)
     cluster = models.Cluster.new(**cluster['result'])
