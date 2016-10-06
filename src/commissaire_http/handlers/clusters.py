@@ -29,10 +29,12 @@ def list_clusters(message, bus):
 
     :param message: jsonrpc message structure.
     :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
     :returns: A jsonrpc structure.
     :rtype: dict
     """
-    clusters_msg = bus.request('storage.list', 'list', params=['Clusters'])
+    clusters_msg = bus.request('storage.list', params=['Clusters'])
     return create_response(
         message['id'],
         [cluster['name'] for cluster in clusters_msg['result']])
