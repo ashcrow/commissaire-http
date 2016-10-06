@@ -59,11 +59,13 @@ def create_cluster(message, bus):
 
     :param message: jsonrpc message structure.
     :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
     :returns: A jsonrpc structure.
     :rtype: dict
     """
     try:
-        bus.request('storage.get', 'get', params=[
+        bus.request('storage.get', params=[
             'Cluster', {'name': message['params']['name']}])
         LOGGER.debug(
             'Creation of already exisiting cluster {0} requested.'.format(
@@ -74,7 +76,7 @@ def create_cluster(message, bus):
         if message['params'].get('network'):
             # Verify the networks existence
             try:
-                bus.request('storage.get', 'get', params=[
+                bus.request('storage.get', params=[
                     'Network', {'name': message['params']['network']}
                 ])
             except Exception as error:
@@ -85,7 +87,7 @@ def create_cluster(message, bus):
         cluster = models.Cluster.new(**message['params'])
         cluster._validate()
         response = bus.request(
-            'storage.save', 'save', params=[
+            'storage.save', params=[
                 'Cluster', cluster.to_dict()])
         return create_response(message['id'], response['result'])
     except models.ValidationError as error:

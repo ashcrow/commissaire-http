@@ -140,7 +140,7 @@ class Test_clusters(TestCase):
             'params': {'name': 'test', 'network': 'test'}
             }, bus)
         bus.request.assert_called_with(
-            'storage.save', 'save', params=[
+            'storage.save', params=[
                 'Cluster', cluster.to_dict()])
 
     def test_create_cluster_with_invalid_network(self):
@@ -169,7 +169,7 @@ class Test_clusters(TestCase):
         # rejected by the handler
         cluster.network = 'default'
         bus.request.assert_called_with(
-            'storage.save', 'save', params=[
+            'storage.save', params=[
                 'Cluster', cluster.to_dict()])
 
     def test_list_cluster_members(self):
