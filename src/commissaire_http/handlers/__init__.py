@@ -18,6 +18,8 @@ Built-in handlers.
 
 import logging
 
+from commissaire_http.constants import JSONRPC_ERRORS
+
 #: Handler specific logger
 LOGGER = logging.getLogger('Handlers')
 
@@ -43,7 +45,8 @@ def return_error(message, error, error_code):
     return response
 
 
-def create_response(id, result=None, error=None, error_code=-32603):
+def create_response(id, result=None, error=None,
+                    error_code=JSONRPC_ERRORS['INTERNAL_ERROR']):
     """
     Creates a jsonrpc response based on input.
 
@@ -67,10 +70,9 @@ def create_response(id, result=None, error=None, error_code=-32603):
     elif error:
         jsonrpc_response['error'] = {
             'code': error_code,
-            'message': error,
+            'message': str(error),
         }
         if isinstance(error, Exception):
-            jsonrpc_response['error']['message'] = str(error)
             jsonrpc_response['error']['data'] = {
                 'exception': str(type(error))}
     else:
