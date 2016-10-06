@@ -159,11 +159,13 @@ def check_cluster_member(message, bus):
 
     :param message: jsonrpc message structure.
     :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
     :returns: A jsonrpc structure.
     :rtype: dict
     """
     try:
-        cluster = bus.request('storage.get', 'get', params=[
+        cluster = bus.request('storage.get', params=[
             'Cluster', {'name': message['params']['name']}, True])
         if message['params']['host'] in cluster['result']['hostset']:
             # Return back the host in a list
