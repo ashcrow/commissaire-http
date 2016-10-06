@@ -185,7 +185,7 @@ def check_cluster_member(message, bus):
         return create_response(
             message['id'],
             error=error,
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+            error_code=JSONRPC_ERRORS['INTERNAL_ERROR'])
 
 
 def add_cluster_member(message, bus):
