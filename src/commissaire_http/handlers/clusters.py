@@ -98,12 +98,14 @@ def list_cluster_members(message, bus):
 
     :param message: jsonrpc message structure.
     :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
     :returns: A jsonrpc structure.
     :rtype: dict
     """
     response = None
     try:
-        cluster = bus.request('storage.get', 'get', params=[
+        cluster = bus.request('storage.get', params=[
             'Cluster', {'name': message['params']['name']}, True])
         LOGGER.debug('Cluster found: {}'.format(cluster['result']['name']))
         LOGGER.debug('Returning: {}'.format(response))
