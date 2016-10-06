@@ -121,7 +121,7 @@ def list_cluster_members(message, bus):
 
 def update_cluster_members(message, bus):
     """
-    Updates the list of memebers in a cluster.
+    Updates the list of members in a cluster.
 
     :param message: jsonrpc message structure.
     :type message: dict
