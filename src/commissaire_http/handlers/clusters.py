@@ -113,12 +113,14 @@ def list_cluster_members(message, bus):
         return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
 
 
-def update_cluster_memebers(message, bus):
+def update_cluster_members(message, bus):
     """
-    Lists hosts in a cluster.
+    Updates the list of memebers in a cluster.
 
     :param message: jsonrpc message structure.
     :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
     :returns: A jsonrpc structure.
     :rtype: dict
     """
@@ -131,7 +133,7 @@ def update_cluster_memebers(message, bus):
         return return_error(message, error, JSONRPC_ERRORS['BAD_REQUEST'])
 
     try:
-        cluster = bus.request('storage.get', 'get', params=[
+        cluster = bus.request('storage.get', params=[
             'Cluster', {'name': message['params']['name']}, True])
     except Exception as error:
         return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
@@ -146,7 +148,7 @@ def update_cluster_memebers(message, bus):
     cluster = models.Cluster.new(**cluster['result'])
     cluster._validate()
     response = bus.request(
-        'storage.save', 'save', params=[
+        'storage.save', params=[
             'Cluster', cluster.to_dict()])
     return create_response(message['id'], response['result'])
 

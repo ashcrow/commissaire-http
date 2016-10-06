@@ -172,9 +172,9 @@ class Test_clusters(TestCase):
             'storage.save', 'save', params=[
                 'Cluster', cluster.to_dict()])
 
-    def test_list_cluster_memebers(self):
+    def test_list_cluster_members(self):
         """
-        Verify that list_cluster_memebers returns proper information.
+        Verify that list_cluster_members returns proper information.
         """
         bus = mock.MagicMock()
         bus.request.return_value = {
@@ -194,9 +194,9 @@ class Test_clusters(TestCase):
                 'params': {'name': 'test'}
                 }, bus))
 
-    def test_update_cluster_memebers_with_valid_input(self):
+    def test_update_cluster_members_with_valid_input(self):
         """
-        Verify that update_cluster_memebers handles valid input.
+        Verify that update_cluster_members handles valid input.
         """
         bus = mock.MagicMock()
         cluster = Cluster.new(
@@ -207,7 +207,7 @@ class Test_clusters(TestCase):
             'result': cluster.to_dict(secure=True),
             'id': '123'}
 
-        result = clusters.update_cluster_memebers({
+        result = clusters.update_cluster_members({
             'jsonrpc': '2.0',
             'id': '123',
             'params': {'name': 'test', 'old': ['127.0.0.1'], 'new': []}
@@ -215,9 +215,9 @@ class Test_clusters(TestCase):
 
         self.assertEquals([], result['result']['hostset'])
 
-    def test_update_cluster_memebers_with_conflicting_input(self):
+    def test_update_cluster_members_with_conflicting_input(self):
         """
-        Verify that update_cluster_memebers handles conflicting input.
+        Verify that update_cluster_members handles conflicting input.
         """
         bus = mock.MagicMock()
         cluster = Cluster.new(
@@ -228,7 +228,7 @@ class Test_clusters(TestCase):
             'result': cluster.to_dict(secure=True),
             'id': '123'}
 
-        result = clusters.update_cluster_memebers({
+        result = clusters.update_cluster_members({
             'jsonrpc': '2.0',
             'id': '123',
             'params': {'name': 'test', 'old': [], 'new': []}
@@ -240,15 +240,15 @@ class Test_clusters(TestCase):
             error_code=JSONRPC_ERRORS['CONFLICT'])
         self.assertEquals(expected_response, result)
 
-    def test_update_cluster_memebers_with_missing_params(self):
+    def test_update_cluster_members_with_missing_params(self):
         """
-        Verify that update_cluster_memebers handles missing old/new params.
+        Verify that update_cluster_members handles missing old/new params.
         """
         for params in (
                 {},
                 {'old': []},
                 {'new': []}):
-            result = clusters.update_cluster_memebers({
+            result = clusters.update_cluster_members({
                 'jsonrpc': '2.0',
                 'id': '123',
                 'params': params,
