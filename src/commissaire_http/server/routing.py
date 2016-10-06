@@ -16,6 +16,8 @@
 Routing items.
 """
 
+from commissaire_http.constants import ROUTING_RX_PARAMS
+
 from commissaire_http.dispatcher import Dispatcher
 from commissaire_http.router import Router
 
@@ -27,40 +29,40 @@ ROUTER.connect(
     conditions={'method': 'GET'})
 ROUTER.connect(
     R'/api/v0/cluster/{name}/',
-    requirements={'name': R'[a-zA-Z0-9\-\_]+'},
+    requirements={'name': ROUTING_RX_PARAMS['name']},
     controller='commissaire_http.handlers.clusters.get_cluster',
     conditions={'method': 'GET'})
 ROUTER.connect(
     R'/api/v0/cluster/{name}/',
-    requirements={'name': R'[a-zA-Z0-9\-\_]+'},
+    requirements={'name': ROUTING_RX_PARAMS['name']},
     controller='commissaire_http.handlers.clusters.create_cluster',
     conditions={'method': 'PUT'})
 ROUTER.connect(
     R'/api/v0/cluster/{name}/hosts/',
-    requirements={'name': R'[a-zA-Z0-9\-\_]+'},
+    requirements={'name': ROUTING_RX_PARAMS['name']},
     controller='commissaire_http.handlers.clusters.list_cluster_members',
     conditions={'method': 'GET'})
 ROUTER.connect(
     R'/api/v0/cluster/{name}/hosts/{host}/',
     requirements={
-        'name': R'[a-zA-Z0-9\-\_]+',
-        'host': R'[a-zA-Z0-9\-\_\.]+',
+        'name': ROUTING_RX_PARAMS['name'],
+        'host': ROUTING_RX_PARAMS['host'],
     },
     controller='commissaire_http.handlers.clusters.check_cluster_member',
     conditions={'method': 'GET'})
 ROUTER.connect(
     R'/api/v0/cluster/{name}/hosts/{host}/',
     requirements={
-        'name': R'[a-zA-Z0-9\-\_]+',
-        'host': R'[a-zA-Z0-9\-\_\.]+',
+        'name': ROUTING_RX_PARAMS['name'],
+        'host': ROUTING_RX_PARAMS['host'],
     },
     controller='commissaire_http.handlers.clusters.add_cluster_member',
     conditions={'method': 'PUT'})
 ROUTER.connect(
     R'/api/v0/cluster/{name}/hosts/{host}/',
     requirements={
-        'name': R'[a-zA-Z0-9\-\_]+',
-        'host': R'[a-zA-Z0-9\-\_\.]+',
+        'name': ROUTING_RX_PARAMS['name'],
+        'host': ROUTING_RX_PARAMS['host'],
     },
     controller='commissaire_http.handlers.clusters.delete_cluster_member',
     conditions={'method': 'DELETE'})
