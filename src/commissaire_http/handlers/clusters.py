@@ -51,10 +51,27 @@ def get_cluster(message, bus):
     :returns: A jsonrpc structure.
     :rtype: dict
     """
-    cluster = bus.request(
-        'storage.get', 'get', params=[
-            'Cluster', {'name': message['params']['name']}])
-    return create_response(message['id'], cluster['result'])
+    cluster_response = bus.request(
+        'storage.get', params=[
+            'Cluster', {'name': message['params']['name']}, True])
+    cluster = models.Cluster.new(**cluster_response['result'])
+    hosts_response = bus.request('storage.list', params=['Hosts'])
+
+    available = unavailable = total = 0
+
+    for host in hosts_response['result']:
+        if host['address'] in cluster.hostset:
+            total += 1
+            if host['status'] == 'active':
+                available += 1
+            else:
+                unavailable += 1
+
+    cluster.hosts['total'] = total
+    cluster.hosts['available'] = available
+    cluster.hosts['unavailable'] = unavailable
+
+    return create_response(message['id'], cluster.to_dict_with_hosts())
 
 
 def create_cluster(message, bus):

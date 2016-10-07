@@ -52,14 +52,29 @@ class Test_clusters(TestCase):
         Verify get_cluster responds with the right information.
         """
         bus = mock.MagicMock()
-        bus.request.return_value = {
-            'jsonrpc': '2.0',
-            'result': [{'name': 'test'}],
-            'id': '123'}
+        bus.request.side_effect = (
+            # Cluster requests
+            {
+                'jsonrpc': '2.0',
+                'result': {'name': 'test'},
+                'id': '123',
+            },
+            # Hosts requests
+            {
+                'jsonrpc': '2.0',
+                'result': [],
+                'id': '123',
+            })
         self.assertEquals(
             {
                 'jsonrpc': '2.0',
-                'result': [{'name': 'test'}],
+                'result': {
+                    'name': 'test',
+                    'hosts': {'available': 0, 'total': 0, 'unavailable': 0},
+                    'network': 'default',
+                    'status': '',
+                    'type': 'kubernetes',
+                },
                 'id': '123',
             },
             clusters.get_cluster({
