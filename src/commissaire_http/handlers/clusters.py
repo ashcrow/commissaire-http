@@ -212,10 +212,16 @@ def add_cluster_member(message, bus):
     try:
         cluster = bus.request('storage.get', params=[
             'Cluster', {'name': message['params']['name']}, True])
-        if message['params']['host'] in cluster['result']['hostset']:
-            # Return back the host in a list ... it's already there
-            return create_response(message['id'], [message['params']['host']])
-        else:
+
+        if message['params']['host'] not in cluster['result']['hostset']:
+            # FIXME: Need input validation.
+            #        - Does the host exist at /commissaire/hosts/{IP}?
+            #        - Does the host already belong to another cluster?
+
+            # FIXME: Should guard against races here, since we're fetching
+            #        the cluster record and writing it back with some parts
+            #        unmodified.  Use either locking or a conditional write
+            #        with the etcd 'modifiedIndex'.  Deferring for now.
             cluster['result']['hostset'].append(message['params']['host'])
             bus.request('storage.save', params=[
                 'Cluster', cluster['result'], True])
@@ -224,11 +230,15 @@ def add_cluster_member(message, bus):
                 message['id'],
                 [message['params']['host']]
             )
+        else:
+            # Return back the host in a list ... it's already there
+            return create_response(message['id'], [message['params']['host']])
+
     except Exception as error:
         return create_response(
             message['id'],
             error=error,
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+            error_code=JSONRPC_ERRORS['INTERNAL_ERROR'])
 
 
 def delete_cluster_member(message, bus):
