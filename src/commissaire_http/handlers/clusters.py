@@ -243,14 +243,8 @@ def add_cluster_member(message, bus):
             bus.request('storage.save', params=[
                 'Cluster', cluster['result'], True])
 
-            return create_response(
-                message['id'],
-                [message['params']['host']]
-            )
-        else:
-            # Return back the host in a list ... it's already there
-            return create_response(message['id'], [message['params']['host']])
-
+        # Return back the host in a list
+        return create_response(message['id'], [message['params']['host']])
     except Exception as error:
         return create_response(
             message['id'],
