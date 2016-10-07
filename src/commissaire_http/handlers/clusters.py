@@ -256,6 +256,10 @@ def delete_cluster_member(message, bus):
         cluster = bus.request('storage.get', params=[
             'Cluster', {'name': message['params']['name']}, True])
         if message['params']['host'] in cluster['result']['hostset']:
+            # FIXME: Should guard against races here, since we're fetching
+            #        the cluster record and writing it back with some parts
+            #        unmodified.  Use either locking or a conditional write
+            #        with the etcd 'modifiedIndex'.  Deferring for now.
             idx = cluster['result']['hostset'].index(message['params']['host'])
             cluster['result']['hostset'].pop(idx)
             bus.request('storage.save', params=[
