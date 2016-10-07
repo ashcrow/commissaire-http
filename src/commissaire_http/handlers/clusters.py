@@ -152,6 +152,14 @@ def update_cluster_members(message, bus):
         LOGGER.error(msg)
         return return_error(message, msg, JSONRPC_ERRORS['CONFLICT'])
 
+    # FIXME: Need input validation.  For each new host,
+    #        - Does the host exist at /commissaire/hosts/{IP}?
+    #        - Does the host already belong to another cluster?
+
+    # FIXME: Should guard against races here, since we're fetching
+    #        the cluster record and writing it back with some parts
+    #        unmodified.  Use either locking or a conditional write
+    #        with the etcd 'modifiedIndex'.  Deferring for now.
     cluster['result']['hostset'] = list(new_hosts)
     cluster = models.Cluster.new(**cluster['result'])
     cluster._validate()
