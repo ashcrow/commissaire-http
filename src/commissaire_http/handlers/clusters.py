@@ -42,10 +42,12 @@ def list_clusters(message, bus):
 
 def get_cluster(message, bus):
     """
-    Lists all clusters.
+    Gets a specific cluster.
 
     :param message: jsonrpc message structure.
     :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
     :returns: A jsonrpc structure.
     :rtype: dict
     """
