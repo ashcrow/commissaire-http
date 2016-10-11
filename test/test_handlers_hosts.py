@@ -25,12 +25,12 @@ from commissaire.constants import JSONRPC_ERRORS
 from commissaire_http.handlers import hosts, create_response, clusters
 from commissaire.models import Host, ValidationError
 
-# Globals reused in network tests
+# Globals reused in host tests
 #: Message ID
 ID = '123'
 #: Generic host instance
 HOST = Host.new(address='127.0.0.1')
-#: Generic jsonrpc network request by address
+#: Generic jsonrpc host request by address
 SIMPLE_HOST_REQUEST = {
     'jsonrpc': '2.0',
     'id': ID,
@@ -82,3 +82,52 @@ class Test_hosts(TestCase):
         self.assertEquals(
             expected,
             hosts.get_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_delete_host(self):
+        """
+        Verify delete_host deletes existing hosts.
+        """
+        bus = mock.MagicMock()
+        bus.request.return_value = None
+        self.assertEquals(
+            {
+                'jsonrpc': '2.0',
+                'result': [],
+                'id': '123',
+            },
+            hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_delete_host_not_found_on_missing_key(self):
+        """
+        Verify delete_host returns 404 on a missing host.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = _bus.RemoteProcedureCallError('test')
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+        expected['error']['message'] = mock.ANY
+        expected['error']['data'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_delete_host_internal_error_on_exception(self):
+        """
+        Verify delete_host returns ISE on any other exception
+        """
+        # Iterate over a few errors
+        for error in (Exception, KeyError, TypeError):
+            bus = mock.MagicMock()
+            bus.request.side_effect = error('test')
+
+            expected = create_response(
+                ID, error='error',
+                error_code=JSONRPC_ERRORS['INTERNAL_ERROR'])
+            expected['error']['message'] = mock.ANY
+            expected['error']['data'] = mock.ANY
+
+            self.assertEquals(
+                expected,
+                hosts.delete_host(SIMPLE_HOST_REQUEST, bus))

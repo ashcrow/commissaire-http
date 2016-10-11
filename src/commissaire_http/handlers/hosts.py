@@ -56,3 +56,31 @@ def get_host(message, bus):
         LOGGER.debug('Client requested a non-existant host: "{}"'.format(
             message['params']['address']))
         return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
+
+
+def delete_host(message, bus):
+    """
+    Deletes an exisiting host.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    # TODO: kick off service job to remove the host
+    try:
+        LOGGER.debug('Attempting to delete host "{}"'.format(
+            message['params']['address']))
+        bus.request('storage.delete', params=[
+            'Host', {'address': message['params']['address']}])
+        return create_response(message['id'], [])
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.debug('Error deleting host: {}: {}'.format(
+            type(error), error))
+        return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
+    except Exception as error:
+        LOGGER.debug('Error deleting host: {}: {}'.format(
+            type(error), error))
+        return return_error(message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
