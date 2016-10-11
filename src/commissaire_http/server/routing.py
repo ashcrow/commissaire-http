@@ -106,7 +106,10 @@ ROUTER.connect(
     requirements={'address': ROUTING_RX_PARAMS['address']},
     controller='commissaire_http.handlers.hosts.delete_host',
     conditions={'method': 'DELETE'})
-
+ROUTER.connect(
+    R'/api/v0/host/{address}/status/',
+    controller='commissaire_http.handlers.hosts.get_host_status',
+    conditions={'method': 'GET'})
 
 #: Global HTTP dispatcher for the server
 DISPATCHER = Dispatcher(

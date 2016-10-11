@@ -21,9 +21,10 @@ from unittest import mock
 from . import TestCase
 
 from commissaire import bus as _bus
+from commissaire import constants as C
 from commissaire.constants import JSONRPC_ERRORS
 from commissaire_http.handlers import hosts, create_response, clusters
-from commissaire.models import Host, ValidationError
+from commissaire.models import Host, HostStatus, ValidationError
 
 # Globals reused in host tests
 #: Message ID
@@ -158,3 +159,32 @@ class Test_hosts(TestCase):
         self.assertEquals(
             expected,
             hosts.get_hostcreds(SIMPLE_HOST_REQUEST, bus))
+
+    def test_get_host_status(self):
+        """
+        Verify get_host_status responds with status information.
+        """
+        bus = mock.MagicMock()
+        bus.request.return_value = create_response(ID, HOST.to_dict())
+        host_status = HostStatus.new(
+            host={'last_check': '', 'status': ''}, type=C.CLUSTER_TYPE_HOST)
+        self.assertEquals(
+            create_response(ID, host_status.to_dict()),
+            hosts.get_host_status(SIMPLE_HOST_REQUEST, bus))
+
+    def test_get_host_status_that_doesnt_exist(self):
+        """
+        Verify get_host_status responds with a 404 error on missing hosts.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = _bus.RemoteProcedureCallError('test')
+
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+        expected['error']['message'] = mock.ANY
+        expected['error']['data'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.get_host_status(SIMPLE_HOST_REQUEST, bus))

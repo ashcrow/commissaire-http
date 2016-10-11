@@ -17,6 +17,8 @@ Networks handlers.
 """
 
 from commissaire import bus as _bus
+from commissaire import constants as C
+from commissaire import models
 from commissaire_http.constants import JSONRPC_ERRORS
 from commissaire_http.handlers import LOGGER, create_response, return_error
 
@@ -110,3 +112,42 @@ def get_hostcreds(message, bus):
         LOGGER.debug('Client requested a non-existant host: "{}"'.format(
             message['params']['address']))
         return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
+
+
+def get_host_status(message, bus):
+    """
+    Gets the status of an exisiting host.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        host_response = bus.request('storage.get', params=[
+            'Host', {'address': message['params']['address']}])
+        host = models.Host.new(**host_response['result'])
+        status = models.HostStatus.new(
+            host={
+                'last_check': host.last_check,
+                'status': host.status,
+            },
+            # TODO: Update when we add other types.
+            type=C.CLUSTER_TYPE_HOST)
+
+        LOGGER.debug('Status for host "{0}": "{1}"'.format(
+            host.address, status.to_json()))
+
+        return create_response(message['id'], status.to_dict())
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.warn('Could not retrieve host "{}". {}: {}'.format(
+            message['params']['address'], type(error), error))
+        return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
+    except Exception as error:
+        LOGGER.debug(
+            'Host Status exception caught for {0}: {1}:{2}'.format(
+                host.address, type(error), error))
+        return return_error(
+            message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
