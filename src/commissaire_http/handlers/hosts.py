@@ -84,3 +84,29 @@ def delete_host(message, bus):
         LOGGER.debug('Error deleting host: {}: {}'.format(
             type(error), error))
         return return_error(message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
+
+
+def get_hostcreds(message, bus):
+    """
+    Gets credentials for a host.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        host_response = bus.request(
+            'storage.get', params=[
+                'Host', {'address': message['params']['address']}, True])
+        creds = {
+            'remote_user': host_response['result']['remote_user'],
+            'ssh_priv_key': host_response['result']['ssh_priv_key']
+        }
+        return create_response(message['id'], creds)
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.debug('Client requested a non-existant host: "{}"'.format(
+            message['params']['address']))
+        return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])

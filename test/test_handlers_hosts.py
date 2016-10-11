@@ -131,3 +131,30 @@ class Test_hosts(TestCase):
             self.assertEquals(
                 expected,
                 hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_get_host_creds(self):
+        """
+        Verify get_hostcreds responds with the right information.
+        """
+        bus = mock.MagicMock()
+        bus.request.return_value = create_response(ID, HOST.to_dict(True))
+        self.assertEquals(
+            create_response(ID, {'ssh_priv_key': '', 'remote_user': 'root'}),
+            hosts.get_hostcreds(SIMPLE_HOST_REQUEST, bus))
+
+    def test_get_hostcreds_that_doesnt_exist(self):
+        """
+        Verify get_hostcreds responds with a 404 error on missing hosts.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = _bus.RemoteProcedureCallError('test')
+
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+        expected['error']['message'] = mock.ANY
+        expected['error']['data'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.get_hostcreds(SIMPLE_HOST_REQUEST, bus))
