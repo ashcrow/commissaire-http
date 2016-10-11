@@ -91,7 +91,11 @@ ROUTER.connect(
     R'/api/v0/hosts/',
     controller='commissaire_http.handlers.hosts.list_hosts',
     conditions={'method': 'GET'})
-
+ROUTER.connect(
+    R'/api/v0/host/{address}/',
+    requirements={'address': ROUTING_RX_PARAMS['address']},
+    controller='commissaire_http.handlers.hosts.get_host',
+    conditions={'method': 'GET'})
 
 #: Global HTTP dispatcher for the server
 DISPATCHER = Dispatcher(

@@ -55,3 +55,30 @@ class Test_hosts(TestCase):
         self.assertEquals(
             create_response(ID, [HOST.to_dict()]),
             hosts.list_hosts(SIMPLE_HOST_REQUEST, bus))
+
+    def test_get_host(self):
+        """
+        Verify get_host responds with the right information.
+        """
+        bus = mock.MagicMock()
+        bus.request.return_value = create_response(ID, HOST.to_dict())
+        self.assertEquals(
+            create_response(ID, HOST.to_dict()),
+            hosts.get_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_get_host_that_doesnt_exist(self):
+        """
+        Verify get_host responds with a 404 error on missing hosts.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = _bus.RemoteProcedureCallError('test')
+
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['NOT_FOUND'])
+        expected['error']['message'] = mock.ANY
+        expected['error']['data'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.get_host(SIMPLE_HOST_REQUEST, bus))

@@ -16,7 +16,9 @@
 Networks handlers.
 """
 
-from commissaire_http.handlers import create_response
+from commissaire import bus as _bus
+from commissaire_http.constants import JSONRPC_ERRORS
+from commissaire_http.handlers import LOGGER, create_response, return_error
 
 
 def list_hosts(message, bus):
@@ -32,3 +34,25 @@ def list_hosts(message, bus):
     """
     hosts_msg = bus.request('storage.list', params=['Hosts'])
     return create_response(message['id'], hosts_msg['result'])
+
+
+def get_host(message, bus):
+    """
+    Gets a specific host.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        host_response = bus.request(
+            'storage.get', params=[
+                'Host', {'address': message['params']['address']}])
+        return create_response(message['id'], host_response['result'])
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.debug('Client requested a non-existant host: "{}"'.format(
+            message['params']['address']))
+        return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
