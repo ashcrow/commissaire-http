@@ -102,11 +102,11 @@ class Test_hosts(TestCase):
             # Host doesn't exist yet
             _bus.RemoteProcedureCallError('test'),
             # Result from save
-            create_response(ID, HOST.to_json())
+            create_response(ID, HOST.to_dict())
         )
 
         self.assertEquals(
-            create_response(ID, HOST.to_json()),
+            create_response(ID, HOST.to_dict()),
             hosts.create_host(SIMPLE_HOST_REQUEST, bus))
 
     def test_create_host_with_invalid_cluster(self):
@@ -144,14 +144,13 @@ class Test_hosts(TestCase):
             create_response(ID, {'hostset': []}),
             # Save of the cluster
             create_response(ID, {'hostset': []}),
-            # Result from save
-            create_response(ID, HOST.to_json())
+            # Result from save (ignored)
+            create_response(ID, HOST.to_dict())
         )
 
         self.assertEquals(
-            create_response(ID, HOST.to_json()),
+            create_response(ID, HOST.to_dict()),
             hosts.create_host(CLUSTER_HOST_REQUEST, bus))
-
 
     def test_create_host_with_the_same_existing_host(self):
         """

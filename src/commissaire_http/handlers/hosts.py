@@ -86,24 +86,22 @@ def create_host(message, bus):
 
         # Verify the cluster exists and it's in the cluster
         if message['params'].get('cluster'):
-            cluster_name = message['params']['cluster']
-            LOGGER.debug('Checking on cluster "{}"'.format(cluster_name))
-            try:
-                cluster = bus.request('storage.get', params=[
-                    'Cluster', {'name': cluster_name}, True])
-            except _bus.RemoteProcedureCallError as error:
-                LOGGER.warn(
-                    'create_host could not find cluster "{}" when matching '
-                    'against host "{}"'.format(cluster_name, address))
+            cluster = _does_cluster_exist(bus, message['params']['cluster'])
+            if not cluster:
                 return return_error(
                     message, 'Cluster does not exist',
                     JSONRPC_ERRORS['INVALID_PARAMETERS'])
-
+            # Verify the host is in the cluster
             if address not in cluster['result']['hostset']:
                 LOGGER.debug('Host "{}" is not in cluster "{}"'.format(
-                    address, cluster_name))
+                    address, message['params']['cluster']))
                 return return_error(
                     message, 'Host not in cluster', JSONRPC_ERRORS['CONFLICT'])
+
+        # Return out now. No more processing needed.
+        return create_response(
+            message['id'], models.Host.new(**host['result']).to_dict())
+
     except _bus.RemoteProcedureCallError as error:
         LOGGER.debug('Brand new host "{}" being created.'.format(
             message['params']['address']))
@@ -111,16 +109,8 @@ def create_host(message, bus):
     if message['params'].get('cluster'):
         # Verify the cluster existence and add the host to it
         cluster_name = message['params']['cluster']
-        LOGGER.debug('Checking on cluster "{}"'.format(cluster_name))
-        try:
-            cluster = bus.request('storage.get', params=[
-                'Cluster', {'name': message['params']['cluster']}, True])
-            LOGGER.debug('Found cluster. Data: "{}"'.format(cluster))
-            if address not in cluster['result']['hostset']:
-                cluster['result']['hostset'].append(address)
-                bus.request('storage.save', params=[
-                    'Cluster', cluster['result']])
-        except _bus.RemoteProcedureCallError as error:
+        cluster = _does_cluster_exist(bus, message['params']['cluster'])
+        if not cluster:
             LOGGER.warn(
                 'create_host could not find cluster "{}" for the creation '
                 'of new host "{}"'.format(cluster_name, address))
@@ -129,14 +119,20 @@ def create_host(message, bus):
                 'Cluster does not exist',
                 JSONRPC_ERRORS['INVALID_PARAMETERS'])
 
+        LOGGER.debug('Found cluster. Data: "{}"'.format(cluster))
+        if address not in cluster['result']['hostset']:
+            cluster['result']['hostset'].append(address)
+            bus.request('storage.save', params=[
+                'Cluster', cluster['result']])
+
     try:
         # TODO: pass this off to the bootstrap process
         host = models.Host.new(**message['params'])
         host._validate()
-        response = bus.request(
+        bus.request(
             'storage.save', params=[
                 'Host', host.to_dict(True)])
-        return create_response(message['id'], response['result'])
+        return create_response(message['id'], host.to_dict())
     except models.ValidationError as error:
         return return_error(message, error, JSONRPC_ERRORS['INVALID_REQUEST'])
 
@@ -243,3 +239,27 @@ def get_host_status(message, bus):
                 host.address, type(error), error))
         return return_error(
             message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
+
+
+def _does_cluster_exist(bus, cluster_name):
+    """
+    Shorthand to check and see if a cluster exists. If it does, return the
+    message response data.
+
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :param cluster_name: The name of the Cluster to look up.
+    :type cluster_name: str
+    :returns: The message structure describing the found Cluster or None
+    :rtype: mixed
+    """
+    LOGGER.debug('Checking on cluster "{}"'.format(cluster_name))
+    try:
+        cluster = bus.request('storage.get', params=[
+            'Cluster', {'name': cluster_name}, True])
+        LOGGER.debug('Found cluster: "{}"'.format(cluster))
+        return cluster
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.warn(
+            'create_host could not find cluster "{}"'.format(cluster_name))
+        LOGGER.debug('Error: {}: "{}"'.format(type(error), error))
