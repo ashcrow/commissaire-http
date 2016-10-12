@@ -60,6 +60,87 @@ def get_host(message, bus):
         return return_error(message, error, JSONRPC_ERRORS['NOT_FOUND'])
 
 
+def create_host(message, bus):
+    """
+    Creates a new host.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    LOGGER.debug('create_host params: "{}"'.format(message['params']))
+    address = message['params']['address']
+    try:
+        host = bus.request('storage.get', params=[
+            'Host', {'address': address}, True])
+        LOGGER.debug('Host "{}" already exisits.'.format(address))
+
+        # Verify the keys match
+        if (host['result']['ssh_priv_key'] !=
+                message['params'].get('ssh_priv_key', '')):
+            return return_error(
+                message, 'Host already exists', JSONRPC_ERRORS['CONFLICT'])
+
+        # Verify the cluster exists and it's in the cluster
+        if message['params'].get('cluster'):
+            cluster_name = message['params']['cluster']
+            LOGGER.debug('Checking on cluster "{}"'.format(cluster_name))
+            try:
+                cluster = bus.request('storage.get', params=[
+                    'Cluster', {'name': cluster_name}, True])
+            except _bus.RemoteProcedureCallError as error:
+                LOGGER.warn(
+                    'create_host could not find cluster "{}" when matching '
+                    'against host "{}"'.format(cluster_name, address))
+                return return_error(
+                    message, 'Cluster does not exist',
+                    JSONRPC_ERRORS['INVALID_PARAMETERS'])
+
+            if address not in cluster['result']['hostset']:
+                LOGGER.debug('Host "{}" is not in cluster "{}"'.format(
+                    address, cluster_name))
+                return return_error(
+                    message, 'Host not in cluster', JSONRPC_ERRORS['CONFLICT'])
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.debug('Brand new host "{}" being created.'.format(
+            message['params']['address']))
+
+    if message['params'].get('cluster'):
+        # Verify the cluster existence and add the host to it
+        cluster_name = message['params']['cluster']
+        LOGGER.debug('Checking on cluster "{}"'.format(cluster_name))
+        try:
+            cluster = bus.request('storage.get', params=[
+                'Cluster', {'name': message['params']['cluster']}, True])
+            LOGGER.debug('Found cluster. Data: "{}"'.format(cluster))
+            if address not in cluster['result']['hostset']:
+                cluster['result']['hostset'].append(address)
+                bus.request('storage.save', params=[
+                    'Cluster', cluster['result']])
+        except _bus.RemoteProcedureCallError as error:
+            LOGGER.warn(
+                'create_host could not find cluster "{}" for the creation '
+                'of new host "{}"'.format(cluster_name, address))
+            return return_error(
+                message,
+                'Cluster does not exist',
+                JSONRPC_ERRORS['INVALID_PARAMETERS'])
+
+    try:
+        # TODO: pass this off to the bootstrap process
+        host = models.Host.new(**message['params'])
+        host._validate()
+        response = bus.request(
+            'storage.save', params=[
+                'Host', host.to_dict(True)])
+        return create_response(message['id'], response['result'])
+    except models.ValidationError as error:
+        return return_error(message, error, JSONRPC_ERRORS['INVALID_REQUEST'])
+
+
 def delete_host(message, bus):
     """
     Deletes an exisiting host.

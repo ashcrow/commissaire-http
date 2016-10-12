@@ -15,6 +15,7 @@
 """
 Test for commissaire_http.handlers.hosts module.
 """
+import copy
 
 from unittest import mock
 
@@ -35,7 +36,15 @@ HOST = Host.new(address='127.0.0.1')
 SIMPLE_HOST_REQUEST = {
     'jsonrpc': '2.0',
     'id': ID,
-    'params': {'address': 'test'},
+    'params': HOST.to_dict(True),
+}
+CLUSTER_HOST_REQUEST = {
+    'jsonrpc': '2.0',
+    'id': ID,
+    'params': {
+        'address': HOST.address,
+        'cluster': 'mycluster',
+    },
 }
 
 
@@ -83,6 +92,125 @@ class Test_hosts(TestCase):
         self.assertEquals(
             expected,
             hosts.get_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_create_host(self):
+        """
+        Verify create_host saves new hosts.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = (
+            # Host doesn't exist yet
+            _bus.RemoteProcedureCallError('test'),
+            # Result from save
+            create_response(ID, HOST.to_json())
+        )
+
+        self.assertEquals(
+            create_response(ID, HOST.to_json()),
+            hosts.create_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_create_host_with_invalid_cluster(self):
+        """
+        Verify create_host returns INVALID_PARAMETERS when the cluster does not exist.
+        """
+        bus = mock.MagicMock()
+
+        bus.request.side_effect = (
+            # Host doesn't exist yet
+            _bus.RemoteProcedureCallError('test'),
+            # Request the cluster which does not exist
+            _bus.RemoteProcedureCallError('test')
+        )
+
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['INVALID_PARAMETERS'])
+        expected['error'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.create_host(CLUSTER_HOST_REQUEST, bus))
+
+    def test_create_host_with_cluster(self):
+        """
+        Verify create_host saves new hosts with it's cluster.
+        """
+        bus = mock.MagicMock()
+
+        bus.request.side_effect = (
+            # Host doesn't exist yet
+            _bus.RemoteProcedureCallError('test'),
+            # Request the cluster
+            create_response(ID, {'hostset': []}),
+            # Save of the cluster
+            create_response(ID, {'hostset': []}),
+            # Result from save
+            create_response(ID, HOST.to_json())
+        )
+
+        self.assertEquals(
+            create_response(ID, HOST.to_json()),
+            hosts.create_host(CLUSTER_HOST_REQUEST, bus))
+
+
+    def test_create_host_with_the_same_existing_host(self):
+        """
+        Verify create_host succeeds when a new host matches an existing one.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = (
+            # Existing host
+            create_response(ID, HOST.to_dict(True)),
+            # Result from save
+            create_response(ID, HOST.to_dict())
+        )
+
+        self.assertEquals(
+            create_response(ID, HOST.to_dict()),
+            hosts.create_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_create_host_with_existing_host_different_ssh_key(self):
+        """
+        Verify create_host returns conflict existing hosts ssh keys do not match.
+        """
+        bus = mock.MagicMock()
+        different = HOST.to_dict()
+        different['ssh_priv_key'] = 'aaa'
+
+        bus.request.return_value = create_response(ID, different)
+
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['CONFLICT'])
+        expected['error'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.create_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_create_host_with_existing_host_different_cluster_memebership(self):
+        """
+        Verify create_host returns conflict existing cluster memebership does not match.
+        """
+        bus = mock.MagicMock()
+        different = HOST.to_dict()
+        different['ssh_priv_key'] = ''
+
+        bus.request.side_effect = (
+            # Existing host
+            create_response(ID, different),
+            # Cluster
+            create_response(ID, {'hostset': []}),
+            create_response(ID, {'hostset': []})
+        )
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['CONFLICT'])
+        expected['error'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.create_host(CLUSTER_HOST_REQUEST, bus))
 
     def test_delete_host(self):
         """
