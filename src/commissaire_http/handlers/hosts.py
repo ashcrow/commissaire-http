@@ -72,7 +72,12 @@ def create_host(message, bus):
     :rtype: dict
     """
     LOGGER.debug('create_host params: "{}"'.format(message['params']))
-    address = message['params']['address']
+    try:
+        address = message['params']['address']
+    except KeyError:
+        return return_error(
+            message, '"address" must be given in the url or in the PUT body',
+            JSONRPC_ERRORS['INVALID_PARAMETERS'])
     try:
         host = bus.request('storage.get', params=[
             'Host', {'address': address}, True])

@@ -109,6 +109,31 @@ class Test_hosts(TestCase):
             create_response(ID, HOST.to_dict()),
             hosts.create_host(SIMPLE_HOST_REQUEST, bus))
 
+    def test_create_host_without_an_address(self):
+        """
+        Verify create_host returns INVALID_PARAMETERS when no address is given.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = (
+            # Host doesn't exist yet
+            _bus.RemoteProcedureCallError('test'),
+            # Result from save
+            create_response(ID, HOST.to_json())
+        )
+
+        addressless = copy.deepcopy(SIMPLE_HOST_REQUEST)
+        addressless['params'] = {}
+
+        expected = create_response(
+            ID, error='error',
+            error_code=JSONRPC_ERRORS['INVALID_PARAMETERS'])
+        expected['error'] = mock.ANY
+
+        self.assertEquals(
+            expected,
+            hosts.create_host(addressless, bus))
+
+
     def test_create_host_with_invalid_cluster(self):
         """
         Verify create_host returns INVALID_PARAMETERS when the cluster does not exist.

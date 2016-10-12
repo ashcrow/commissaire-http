@@ -102,6 +102,10 @@ ROUTER.connect(
     controller='commissaire_http.handlers.hosts.create_host',
     conditions={'method': 'PUT'})
 ROUTER.connect(
+    R'/api/v0/host/',
+    controller='commissaire_http.handlers.hosts.create_host',
+    conditions={'method': 'PUT'})
+ROUTER.connect(
     R'/api/v0/host/{address}/creds',
     requirements={'address': ROUTING_RX_PARAMS['address']},
     controller='commissaire_http.handlers.hosts.get_hostcreds',
