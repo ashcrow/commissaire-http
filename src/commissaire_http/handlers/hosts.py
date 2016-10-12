@@ -152,12 +152,23 @@ def delete_host(message, bus):
     :returns: A jsonrpc structure.
     :rtype: dict
     """
-    # TODO: kick off service job to remove the host
     try:
         LOGGER.debug('Attempting to delete host "{}"'.format(
             message['params']['address']))
         bus.request('storage.delete', params=[
             'Host', {'address': message['params']['address']}])
+        # TODO: kick off service job to remove the host
+        # Remove from a cluster
+        for cluster in bus.request(
+                'storage.list', params=['Clusters', True])['result']:
+            if message['params']['address'] in cluster['hostset']:
+                LOGGER.info('Removing host "{}" from cluster "{}"'.format(
+                    message['params']['address'], cluster['name']))
+                cluster['hostset'].pop(
+                    cluster['hostset'].index(message['params']['address']))
+                bus.request('storage.save', params=['Cluster', cluster])
+                # A host can only be part of one cluster so break the loop
+                break
         return create_response(message['id'], [])
     except _bus.RemoteProcedureCallError as error:
         LOGGER.debug('Error deleting host: {}: {}'.format(

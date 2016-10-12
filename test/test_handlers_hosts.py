@@ -217,7 +217,12 @@ class Test_hosts(TestCase):
         Verify delete_host deletes existing hosts.
         """
         bus = mock.MagicMock()
-        bus.request.return_value = None
+        bus.request.side_effect = (
+            # The delete shouldn't return anything
+            None,
+            # The clusters list
+            {'result': [{'hostset': []}]},
+        )
         self.assertEquals(
             {
                 'jsonrpc': '2.0',
@@ -225,6 +230,38 @@ class Test_hosts(TestCase):
                 'id': '123',
             },
             hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
+
+    def test_delete_host_thats_in_a_cluster(self):
+        """
+        Verify delete_host deletes existing host and removes it from it's cluster.
+        """
+        bus = mock.MagicMock()
+        bus.request.side_effect = (
+            # The delete shouldn't return anything
+            None,
+            # The clusters list
+            {'result': [{'name': 'mycluster', 'hostset': [HOST.address]}]},
+            # The cluster response on save (which is ignored)
+            {'result': []}
+        )
+        self.assertEquals(
+            {
+                'jsonrpc': '2.0',
+                'result': [],
+                'id': '123',
+            },
+            hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
+
+        # Verify we had a host delete_host
+        bus.request.assert_has_calls((
+            # Verify we had an initial delete
+            mock.call('storage.delete', params=[
+                'Host', {'address': HOST.address}]),
+            # Verify we had a list of clusters
+            mock.call('storage.list', params=['Clusters', True]),
+            # Verify we had a cluster save
+            mock.call('storage.save', params=['Cluster', mock.ANY])
+        ))
 
     def test_delete_host_not_found_on_missing_key(self):
         """
