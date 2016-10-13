@@ -19,7 +19,7 @@ import copy
 
 from unittest import mock
 
-from . import TestCase
+from . import TestCase, expected_error
 
 from commissaire import bus as _bus
 from commissaire import constants as C
@@ -83,14 +83,8 @@ class Test_hosts(TestCase):
         bus = mock.MagicMock()
         bus.request.side_effect = _bus.RemoteProcedureCallError('test')
 
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-        expected['error']['message'] = mock.ANY
-        expected['error']['data'] = mock.ANY
-
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['NOT_FOUND']),
             hosts.get_host(SIMPLE_HOST_REQUEST, bus))
 
     def test_create_host(self):
@@ -124,13 +118,8 @@ class Test_hosts(TestCase):
         addressless = copy.deepcopy(SIMPLE_HOST_REQUEST)
         addressless['params'] = {}
 
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['INVALID_PARAMETERS'])
-        expected['error'] = mock.ANY
-
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['INVALID_PARAMETERS']),
             hosts.create_host(addressless, bus))
 
 
@@ -147,13 +136,8 @@ class Test_hosts(TestCase):
             _bus.RemoteProcedureCallError('test')
         )
 
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['INVALID_PARAMETERS'])
-        expected['error'] = mock.ANY
-
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['INVALID_PARAMETERS']),
             hosts.create_host(CLUSTER_HOST_REQUEST, bus))
 
     def test_create_host_with_cluster(self):
@@ -203,13 +187,8 @@ class Test_hosts(TestCase):
 
         bus.request.return_value = create_response(ID, different)
 
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['CONFLICT'])
-        expected['error'] = mock.ANY
-
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['CONFLICT']),
             hosts.create_host(SIMPLE_HOST_REQUEST, bus))
 
     def test_create_host_with_existing_host_different_cluster_memebership(self):
@@ -227,13 +206,9 @@ class Test_hosts(TestCase):
             create_response(ID, {'hostset': []}),
             create_response(ID, {'hostset': []})
         )
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['CONFLICT'])
-        expected['error'] = mock.ANY
 
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['CONFLICT']),
             hosts.create_host(CLUSTER_HOST_REQUEST, bus))
 
     def test_delete_host(self):
@@ -293,14 +268,9 @@ class Test_hosts(TestCase):
         """
         bus = mock.MagicMock()
         bus.request.side_effect = _bus.RemoteProcedureCallError('test')
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-        expected['error']['message'] = mock.ANY
-        expected['error']['data'] = mock.ANY
 
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['NOT_FOUND']),
             hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
 
     def test_delete_host_internal_error_on_exception(self):
@@ -312,14 +282,8 @@ class Test_hosts(TestCase):
             bus = mock.MagicMock()
             bus.request.side_effect = error('test')
 
-            expected = create_response(
-                ID, error='error',
-                error_code=JSONRPC_ERRORS['INTERNAL_ERROR'])
-            expected['error']['message'] = mock.ANY
-            expected['error']['data'] = mock.ANY
-
             self.assertEquals(
-                expected,
+                expected_error(ID, JSONRPC_ERRORS['INTERNAL_ERROR']),
                 hosts.delete_host(SIMPLE_HOST_REQUEST, bus))
 
     def test_get_host_creds(self):
@@ -339,14 +303,8 @@ class Test_hosts(TestCase):
         bus = mock.MagicMock()
         bus.request.side_effect = _bus.RemoteProcedureCallError('test')
 
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-        expected['error']['message'] = mock.ANY
-        expected['error']['data'] = mock.ANY
-
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['NOT_FOUND']),
             hosts.get_hostcreds(SIMPLE_HOST_REQUEST, bus))
 
     def test_get_host_status(self):
@@ -368,12 +326,6 @@ class Test_hosts(TestCase):
         bus = mock.MagicMock()
         bus.request.side_effect = _bus.RemoteProcedureCallError('test')
 
-        expected = create_response(
-            ID, error='error',
-            error_code=JSONRPC_ERRORS['NOT_FOUND'])
-        expected['error']['message'] = mock.ANY
-        expected['error']['data'] = mock.ANY
-
         self.assertEquals(
-            expected,
+            expected_error(ID, JSONRPC_ERRORS['NOT_FOUND']),
             hosts.get_host_status(SIMPLE_HOST_REQUEST, bus))
