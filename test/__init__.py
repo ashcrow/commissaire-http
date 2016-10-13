@@ -54,7 +54,7 @@ def get_fixture_file_path(filename):
 
 def expected_error(message_id, code):
     """
-    Creats an expected error structure with the error information as mock.ANY.
+    Creates an expected error structure with the error information as mock.ANY.
 
     :param message_id: The ID of the message.
     :type message_id: str
