@@ -154,19 +154,19 @@ def delete_host(message, bus):
     :rtype: dict
     """
     try:
-        LOGGER.debug('Attempting to delete host "{}"'.format(
-            message['params']['address']))
+        address = message['params']['address']
+        LOGGER.debug('Attempting to delete host "{}"'.format(address))
         bus.request('storage.delete', params=[
-            'Host', {'address': message['params']['address']}])
+            'Host', {'address': address}])
         # TODO: kick off service job to remove the host
         # Remove from a cluster
         for cluster in bus.request(
                 'storage.list', params=['Clusters', True])['result']:
-            if message['params']['address'] in cluster['hostset']:
+            if address in cluster['hostset']:
                 LOGGER.info('Removing host "{}" from cluster "{}"'.format(
-                    message['params']['address'], cluster['name']))
+                    address, cluster['name']))
                 cluster['hostset'].pop(
-                    cluster['hostset'].index(message['params']['address']))
+                    cluster['hostset'].index(address))
                 bus.request('storage.save', params=['Cluster', cluster])
                 # A host can only be part of one cluster so break the loop
                 break
