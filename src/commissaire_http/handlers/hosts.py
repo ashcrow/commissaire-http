@@ -144,7 +144,7 @@ def create_host(message, bus):
 
 def delete_host(message, bus):
     """
-    Deletes an exisiting host.
+    Deletes an existing host.
 
     :param message: jsonrpc message structure.
     :type message: dict
