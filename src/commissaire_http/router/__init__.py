@@ -60,7 +60,7 @@ class Router(Mapper):
             if len(args) > 1:
                 url_path_idx = 1
             # If the url path ends with a forward slash then append the
-            # paramter regex to for matching and store it in _.
+            # parameter regex for matching and store it in _.
             if args[url_path_idx].endswith('/'):
                 args[url_path_idx] = args[url_path_idx][:-1] + '{_:[/]?}'
         # Call the parent connect to do the rest of the heavy lifting.
