@@ -36,35 +36,35 @@ def _register(router):
 
     router.connect(
         R'/api/v0/hosts/',
-        controller='commissaire_http.handlers.hosts.list_hosts',
+        controller=list_hosts,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/host/{address}/',
         requirements={'address': ROUTING_RX_PARAMS['address']},
-        controller='commissaire_http.handlers.hosts.get_host',
+        controller=get_host,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/host/{address}/',
         requirements={'address': ROUTING_RX_PARAMS['address']},
-        controller='commissaire_http.handlers.hosts.create_host',
+        controller=create_host,
         conditions={'method': 'PUT'})
     router.connect(
         R'/api/v0/host/',
-        controller='commissaire_http.handlers.hosts.create_host',
+        controller=create_host,
         conditions={'method': 'PUT'})
     router.connect(
         R'/api/v0/host/{address}/creds',
         requirements={'address': ROUTING_RX_PARAMS['address']},
-        controller='commissaire_http.handlers.hosts.get_hostcreds',
+        controller=get_hostcreds,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/host/{address}/',
         requirements={'address': ROUTING_RX_PARAMS['address']},
-        controller='commissaire_http.handlers.hosts.delete_host',
+        controller=delete_host,
         conditions={'method': 'DELETE'})
     router.connect(
         R'/api/v0/host/{address}/status/',
-        controller='commissaire_http.handlers.hosts.get_host_status',
+        controller=get_host_status,
         conditions={'method': 'GET'})
 
     return router

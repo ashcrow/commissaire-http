@@ -36,22 +36,22 @@ def _register(router):
     # Networks
     router.connect(
         R'/api/v0/networks/',
-        controller='commissaire_http.handlers.networks.list_networks',
+        controller=list_networks,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/network/{name}/',
         requirements={'name': ROUTING_RX_PARAMS['name']},
-        controller='commissaire_http.handlers.networks.get_network',
+        controller=get_network,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/network/{name}/',
         requirements={'name': ROUTING_RX_PARAMS['name']},
-        controller='commissaire_http.handlers.networks.create_network',
+        controller=create_network,
         conditions={'method': 'PUT'})
     router.connect(
         R'/api/v0/network/{name}/',
         requirements={'name': ROUTING_RX_PARAMS['name']},
-        controller='commissaire_http.handlers.networks.delete_network',
+        controller=delete_network,
         conditions={'method': 'DELETE'})
 
     return router

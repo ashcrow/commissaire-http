@@ -36,22 +36,22 @@ def _register(router):
 
     router.connect(
         R'/api/v0/clusters/',
-        controller='commissaire_http.handlers.clusters.list_clusters',
+        controller=list_clusters,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/cluster/{name}/',
         requirements={'name': ROUTING_RX_PARAMS['name']},
-        controller='commissaire_http.handlers.clusters.get_cluster',
+        controller=get_cluster,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/cluster/{name}/',
         requirements={'name': ROUTING_RX_PARAMS['name']},
-        controller='commissaire_http.handlers.clusters.create_cluster',
+        controller=create_cluster,
         conditions={'method': 'PUT'})
     router.connect(
         R'/api/v0/cluster/{name}/hosts/',
         requirements={'name': ROUTING_RX_PARAMS['name']},
-        controller='commissaire_http.handlers.clusters.list_cluster_members',
+        controller=list_cluster_members,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/cluster/{name}/hosts/{host}/',
@@ -59,7 +59,7 @@ def _register(router):
             'name': ROUTING_RX_PARAMS['name'],
             'host': ROUTING_RX_PARAMS['host'],
         },
-        controller='commissaire_http.handlers.clusters.check_cluster_member',
+        controller=check_cluster_member,
         conditions={'method': 'GET'})
     router.connect(
         R'/api/v0/cluster/{name}/hosts/{host}/',
@@ -67,7 +67,7 @@ def _register(router):
             'name': ROUTING_RX_PARAMS['name'],
             'host': ROUTING_RX_PARAMS['host'],
         },
-        controller='commissaire_http.handlers.clusters.add_cluster_member',
+        controller=add_cluster_member,
         conditions={'method': 'PUT'})
     router.connect(
         R'/api/v0/cluster/{name}/hosts/{host}/',
@@ -75,7 +75,7 @@ def _register(router):
             'name': ROUTING_RX_PARAMS['name'],
             'host': ROUTING_RX_PARAMS['host'],
         },
-        controller='commissaire_http.handlers.clusters.delete_cluster_member',
+        controller=delete_cluster_member,
         conditions={'method': 'DELETE'})
 
     return router
