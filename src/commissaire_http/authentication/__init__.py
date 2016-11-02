@@ -152,7 +152,8 @@ class AuthenticationManager:
             # The plugin handled it's own start_response and
             # return data. Pull from the fake_start_response and return
             # the result from authenticate.
-            elif result is not False and fake_start_response.call_count > 0:
+            elif isinstance(
+                    result, list) and fake_start_response.call_count > 0:
                 self.logger.debug('{} succeeded authentication.'.format(
                     authenticator.__class__.__name__))
                 self.logger.debug('Response: {}'.format(fake_start_response))
