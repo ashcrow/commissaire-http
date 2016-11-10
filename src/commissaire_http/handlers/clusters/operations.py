@@ -16,6 +16,8 @@
 Clusters handlers.
 """
 
+import datetime
+
 from commissaire import models
 from commissaire import bus as _bus
 from commissaire_http.constants import JSONRPC_ERRORS
@@ -107,4 +109,86 @@ def create_cluster_deploy(message, bus):
     except _bus.RemoteProcedureCallError as error:
         LOGGER.debug('Error creating ClusterDeploy: {}: {}'.format(
             type(error), error))
+        return return_error(message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
+
+
+def get_cluster_operation(model_cls, message, bus):
+    """
+    Gets a specific operation based on the model_cls.
+
+    :param model_cls: The model class to use.
+    :type model_cls: class
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    try:
+        response = bus.request(
+            'storage.get', params=[
+                model_cls.__name__,
+                {'name': message['params']['name']}, True])
+        model = model_cls.new(**response['result'])
+        model._validate()
+
+        return create_response(message['id'], model.to_dict())
+    except models.ValidationError as error:
+        LOGGER.info('Invalid data retrieved. "{}"'.format(error))
+        LOGGER.debug('Data="{}"'.format(message['params']))
+        return return_error(message, error, JSONRPC_ERRORS['INVALID_REQUEST'])
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.debug('Error getting {}: {}: {}'.format(
+            model_cls.__name__, type(error), error))
+        return return_error(message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
+
+
+def create_cluster_operation(model_cls, message, bus):
+    """
+    Creates a new operation based on the model_cls.
+
+    :param model_cls: The model class to use.
+    :type model_cls: class
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+
+    # Verify cluster exists first
+    cluster_name = message['params']['name']
+    try:
+        bus.request(
+            'storage.get', params=[
+                'Cluster', {'name': cluster_name}, True])
+        LOGGER.debug('Found cluster "{}"'.format(cluster_name))
+    except:
+        error_msg = 'Cluster "{}" does not exist.'.format(cluster_name)
+        LOGGER.debug(error_msg)
+        return return_error(message, error_msg, JSONRPC_ERRORS['NOT_FOUND'])
+
+    try:
+        model = model_cls.new(
+            name=cluster_name,
+            started_at=datetime.datetime.utcnow().isoformat())
+        model._validate()
+
+        # TODO: Hook up service call
+        # if isinstance(model_cls, models.ClusterUpgrade):
+        # elif isinstance(models_cls, models.ClusterRestart):
+
+        result = bus.request(
+            'storage.save', params=[
+                model_cls.__name__, model.to_dict()])
+        return create_response(message['id'], result['result'])
+    except models.ValidationError as error:
+        LOGGER.info('Invalid data provided. "{}"'.format(error))
+        LOGGER.debug('Data="{}"'.format(message['params']))
+        return return_error(message, error, JSONRPC_ERRORS['INVALID_REQUEST'])
+    except _bus.RemoteProcedureCallError as error:
+        LOGGER.debug('Error creating {}: {}: {}'.format(
+            model_cls.__name__, type(error), error))
         return return_error(message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
