@@ -112,6 +112,34 @@ def create_cluster_deploy(message, bus):
         return return_error(message, error, JSONRPC_ERRORS['INTERNAL_ERROR'])
 
 
+def get_cluster_upgrade(message, bus):  # pragma: no cover
+    """
+    Gets a new cluster upgrade.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    return get_cluster_operation(models.ClusterUpgrade, message, bus)
+
+
+def create_cluster_upgrade(message, bus):  # pragma: no cover
+    """
+    Creates a new cluster upgrade.
+
+    :param message: jsonrpc message structure.
+    :type message: dict
+    :param bus: Bus instance.
+    :type bus: commissaire_http.bus.Bus
+    :returns: A jsonrpc structure.
+    :rtype: dict
+    """
+    return create_cluster_operation(models.ClusterUpgrade, message, bus)
+
+
 def get_cluster_operation(model_cls, message, bus):
     """
     Gets a specific operation based on the model_cls.
