@@ -46,6 +46,17 @@ def _register(router):
         requirements={'name': ROUTING_RX_PARAMS['name']},
         controller=create_cluster_deploy,
         conditions={'method': 'PUT'})
+    # Upgrade
+    router.connect(
+        R'/api/v0/cluster/{name}/upgrade',
+        requirements={'name': ROUTING_RX_PARAMS['name']},
+        controller=get_cluster_upgrade,
+        conditions={'method': 'GET'})
+    router.connect(
+        R'/api/v0/cluster/{name}/upgrade',
+        requirements={'name': ROUTING_RX_PARAMS['name']},
+        controller=create_cluster_upgrade,
+        conditions={'method': 'PUT'})
 
     return router
 
